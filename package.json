@@ -1,0 +1,33 @@
+{
+    "name": "covott",
+    "version": "1.0.0",
+    "description": "Colaborative Visual Object Tagging Tool",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/vitorsss/CoVOTT.git"
+    },
+    "author": "Vitor Soares <https://github.com/vitorsss>",
+    "license": "Apache 2.0",
+    "bugs": {
+        "url": "https://github.com/vitorsss/CoVOTT/issues"
+    },
+    "homepage": "https://github.com/vitorsss/CoVOTT#readme",
+    "dependencies": {
+        "body-parser": "^1.18.2",
+        "bower": "^1.8.2",
+        "express": "^4.16.3",
+        "log": "^1.4.0",
+        "socket.io": "^2.0.4"
+    },
+    "eslintConfig": {
+        "env": {
+            "browser": true,
+            "node": true
+        }
+    }
+}
