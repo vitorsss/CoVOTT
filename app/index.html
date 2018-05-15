@@ -1,11 +1,17 @@
-<script src="/socket.io/socket.io.js"></script>
-<script>
-    var socket = io.connect('http://localhost:8080');
-    socket.on('news', function(data) {
-        console.log(data);
-        socket.emit('my other event', {
-            my: 'data'
-        });
-    });
+<!DOCTYPE html>
+<html>
 
-</script>
+<head>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="rect.js"></script>
+    <script src="app.js"></script>
+</head>
+
+<body onload="app.initCanvas()">
+    <canvas id="imageCanvas" style="border-style: solid; border-width: 1px"></canvas>
+    <br/>
+    <button id="prevButton" onclick="app.requestPreviousFileAddress();">Prev</button>
+    <button id="nextButton" onclick="app.requestNextFileAddress();">Next</button>
+</body>
+
+</html>

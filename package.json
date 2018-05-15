@@ -20,14 +20,21 @@
     "dependencies": {
         "body-parser": "^1.18.2",
         "bower": "^1.8.2",
+        "chokidar": "^2.0.3",
         "express": "^4.16.3",
         "log": "^1.4.0",
+        "promise": "^8.0.1",
+        "properties": "^1.2.1",
         "socket.io": "^2.0.4"
+    },
+    "jslintConfig": {
+        "es6": true
     },
     "eslintConfig": {
         "env": {
             "browser": true,
-            "node": true
+            "node": true,
+            "es6": true
         }
     }
 }
