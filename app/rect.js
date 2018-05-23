@@ -5,6 +5,7 @@ class Rect {
         this.right = right || 0;
         this.bottom = bottom || 0;
         this.creationTimestamp = new Date().getTime();
+        this.tags = [];
     }
 
     width() {
@@ -30,6 +31,7 @@ class Rect {
     static fromObject(rectParams) {
         var rect = new Rect(rectParams.left, rectParams.top, rectParams.right, rectParams.bottom);
         rect.creationTimestamp = rectParams.creationTimestamp;
+        rect.tags = rectParams.tags;
         return rect;
     }
 }

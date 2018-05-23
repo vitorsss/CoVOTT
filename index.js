@@ -11,6 +11,7 @@
         Log = require('log'),
         fs = require('fs'),
         Promise = require('promise'),
+        readline = require('readline'),
         log = new Log('debug', fs.createWriteStream('my.log')),
         users = 0,
         propertiesLoader = require("properties");
@@ -51,7 +52,8 @@
             promissesVerifyYolo = [],
             mapArquivos = {},
             lastObject,
-            fistFile;
+            fistFile,
+            tags = [];
 
         promissesVerifyYolo.push(verifyIfFileExistCreateIfNot(pathYoloCfg, function (resolve, reject) {
             var yoloCfgWriteStream = fs.createWriteStream(pathYoloCfg);
@@ -74,6 +76,20 @@
                 objNamesWriteStream.on('error', reject2);
                 objNamesWriteStream.on('finish', resolve2);
                 objNamesWriteStream.end();
+            }, function (resolve2, reject2) {
+                var objNameReadLine = readline.createInterface({
+                        input: fs.createReadStream(pathObjNames)
+                    });
+                objNameReadLine.on('line', function (line) {
+                    log.info('Tag ', line, ' was added');
+                    tags.push(line);
+                });
+                objNameReadLine.on('close', function () {
+                    resolve2();
+                });
+                objNameReadLine.on('error', function (err) {
+                    reject2(err);
+                });
             }));
 
             promissesVerifyYoloData.push(verifyIfFileExistCreateIfNot(pathObjTest, function (resolve2, reject2) {
@@ -152,42 +168,64 @@
                 delete mapArquivos[filename];
                 log.debug('map after', JSON.stringify(mapArquivos));
                 io.sockets.emit('deletedFile', filename);
+            }).on('ready', function () {
+                log.info('Initial scan complete!');
+                io.on('connection', function (socket) {
+                    users += 1;
+                    log.info('Connected users: %d', users);
+                    socket.on('getNextFileAddress', function (current) {
+                        log.debug('getNextFileAddress', current, JSON.stringify(mapArquivos[current]));
+                        if (current && mapArquivos.hasOwnProperty(current)) {
+                            if (mapArquivos[current].nextFile) {
+                                socket.emit('updatedFileAndRects', mapArquivos[current].nextFile, mapArquivos[mapArquivos[current].nextFile].rects);
+                            }
+                        } else {
+                            socket.emit('updatedFileAndRects', fistFile, mapArquivos[fistFile].rects);
+                        }
+                    });
+
+                    socket.on('addTag', function (tag) {
+                        log.info('Add tag: ', tag);
+                        tags.push(tag);
+                        socket.emit('updateTags', tags);
+                    });
+
+                    socket.on('getTags', function () {
+                        socket.emit('updateTags', tags);
+                    });
+
+                    socket.on('getPreviousFileAddress', function (current) {
+                        log.debug('getPreviousFileAddress', current, JSON.stringify(mapArquivos[current]));
+                        if (current && mapArquivos.hasOwnProperty(current)) {
+                            if (mapArquivos[current].lastFile) {
+                                socket.emit('updatedFileAndRects', mapArquivos[current].lastFile, mapArquivos[mapArquivos[current].lastFile].rects);
+                            }
+                        } else {
+                            socket.emit('updatedFileAndRects', fistFile, mapArquivos[fistFile].rects);
+                        }
+                    });
+
+                    socket.on('addImageRect', function (fileAddress, rect) {
+                        mapArquivos[fileAddress].rects.push(rect);
+                        socket.broadcast.emit('imageRectAddedOrChanged', fileAddress, rect);
+                    });
+
+                    socket.on('updateRect', function (fileAddress, rect) {
+                        var indice = mapArquivos[fileAddress].rects.findIndex(function (obj) {
+                            return obj.creationTimestamp === rect.creationTimestamp;
+                        });
+                        mapArquivos[fileAddress].rects[indice] = rect;
+                        socket.broadcast.emit('imageRectAddedOrChanged', fileAddress, rect);
+                    });
+
+                    socket.on('disconnect', function () {
+                        users -= 1;
+                    });
+                });
+
+                server.listen(DEFAULT_PORT);
+                log.info('Running on http://localhost:' + DEFAULT_PORT + " - " + (new Date().getTime() - initialTimestamp));
             });
-
-            io.on('connection', function (socket) {
-                users += 1;
-                log.info('Connected users: %d', users);
-                socket.on('getNextFileAddress', function (current) {
-                    log.debug('getNextFileAddress', current, JSON.stringify(mapArquivos[current]));
-                    if (current && mapArquivos.hasOwnProperty(current)) {
-                        socket.emit('updatedFileAddress', mapArquivos[current].nextFile, mapArquivos[mapArquivos[current].nextFile].rects);
-                    } else {
-                        socket.emit('updatedFileAddress', fistFile, mapArquivos[fistFile].rects);
-                    }
-                });
-
-                socket.on('getPreviousFileAddress', function (current) {
-                    log.debug('getPreviousFileAddress', current, JSON.stringify(mapArquivos[current]));
-                    if (current && mapArquivos.hasOwnProperty(current)) {
-                        socket.emit('updatedFileAddress', mapArquivos[current].lastFile, mapArquivos[mapArquivos[current].lastFile].rects);
-                    } else {
-                        socket.emit('updatedFileAddress', fistFile, mapArquivos[fistFile].rects);
-                    }
-                });
-
-                socket.on('addImageRect', function (fileAddress, rect) {
-                    mapArquivos[fileAddress].rects.push(rect);
-                    socket.broadcast.emit('imageRectAdded', fileAddress, rect);
-                });
-
-                socket.on('disconnect', function () {
-                    users -= 1;
-                });
-            });
-
-
-            server.listen(DEFAULT_PORT);
-            log.info('Running on http://localhost:' + DEFAULT_PORT + " - " + (new Date().getTime() - initialTimestamp));
         }, function (err) {
             log.error('Erro ao verificar arquivos YOLO:', err);
         });
