@@ -4,7 +4,8 @@ var app = {};
     var socket,
         currentFileAddress,
         rects,
-        currentRect;
+        currentRect,
+        canvasSameRectTolerance = 5;
 
     app.requestNextFileAddress = function () {
         socket.emit('getNextFileAddress', currentFileAddress);
@@ -126,25 +127,25 @@ var app = {};
                 right = Math.max(app.initialX, app.x),
                 bottom = Math.max(app.initialY, app.y),
                 tempRect = new Rect(left, top, right, bottom);
-            if (tempRect.height() < 2 && tempRect.width() < 2) {
+            if (tempRect.height() < canvasSameRectTolerance && tempRect.width() < canvasSameRectTolerance) {
                 for (var rect in rects) {
                     if (rects.hasOwnProperty(rect)) {
                         rect = rects[rect];
                         var tempRectCenterX = tempRect.centerX(),
                             tempRectCenterY = tempRect.centerY();
-                        if (tempRectCenterX > rect.left+2 && tempRectCenterX < rect.right-2) {
-                            if (tempRectCenterY < rect.top + 2 && tempRectCenterY > rect.top - 2) {
+                        if (tempRectCenterX > rect.left + canvasSameRectTolerance && tempRectCenterX < rect.right - canvasSameRectTolerance) {
+                            if (tempRectCenterY < rect.top + canvasSameRectTolerance && tempRectCenterY > rect.top - canvasSameRectTolerance) {
                                 currentRect = rect;
                                 break;
-                            } else if (tempRectCenterY < rect.bottom + 2 && tempRectCenterY > rect.bottom - 2) {
+                            } else if (tempRectCenterY < rect.bottom + canvasSameRectTolerance && tempRectCenterY > rect.bottom - canvasSameRectTolerance) {
                                 currentRect = rect;
                                 break;
                             }
-                        } else if (tempRectCenterY > rect.top+2 && tempRectCenterY < rect.bottom-2) {
-                            if (tempRectCenterX < rect.left + 2 && tempRectCenterX > rect.left - 2) {
+                        } else if (tempRectCenterY > rect.top + canvasSameRectTolerance && tempRectCenterY < rect.bottom - canvasSameRectTolerance) {
+                            if (tempRectCenterX < rect.left + canvasSameRectTolerance && tempRectCenterX > rect.left - canvasSameRectTolerance) {
                                 currentRect = rect;
                                 break;
-                            } else if (tempRectCenterX < rect.right + 2 && tempRectCenterX > rect.right - 2) {
+                            } else if (tempRectCenterX < rect.right + canvasSameRectTolerance && tempRectCenterX > rect.right - canvasSameRectTolerance) {
                                 currentRect = rect;
                                 break;
                             }

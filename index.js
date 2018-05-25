@@ -12,6 +12,7 @@
         fs = require('fs'),
         Promise = require('promise'),
         readline = require('readline'),
+        imageSize = require('image-size'),
         log = new Log('debug', fs.createWriteStream('my.log')),
         users = 0,
         propertiesLoader = require("properties");
@@ -136,7 +137,7 @@
             app.use('/', express['static'](path.join('app')));
             app.use('/yolo/', express['static'](pathProjectYoloFolder));
 
-            chokidar.watch(pathObjFolder, {ignored: "*.txt", cwd: pathProjectYoloFolder, persistent: true}).on('add', function (filename) {
+            chokidar.watch(pathObjFolder, {ignored: "**/*.txt", cwd: pathProjectYoloFolder, persistent: true}).on('add', function (filename) {
                 log.info(filename, ' was added');
                 if (lastObject) {
                     lastObject.nextFile = filename;
@@ -145,7 +146,60 @@
                 }
                 lastObject = {currentFile: filename, rects: [], lastFile: (lastObject ? lastObject.currentFile : undefined)};
                 mapArquivos[filename] = lastObject;
-                io.sockets.emit('newFile', filename);
+                var tempCurrentObject = lastObject,
+                    mappingFileName = path.join(pathProjectYoloFolder, filename.substring(0, filename.lastIndexOf('.')) + ".txt");
+                verifyIfFileExistCreateIfNot(mappingFileName, function (resolve) {
+                    log.debug('No mapping found for', filename, ' file not found', mappingFileName);
+                    resolve([]);
+                }, function (resolve) {
+                    var mappingFileReadLine = readline.createInterface({
+                            input: fs.createReadStream(mappingFileName)
+                        }),
+                        dimensions = imageSize(path.join(pathProjectYoloFolder, filename)),
+                        rects = [];
+                    mappingFileReadLine.on('line', function (line) {
+                        log.debug('reading rect', line, 'from', filename);
+                        var lineSplit = line.split(' '),
+                            tag = tags[parseInt(lineSplit[0], 10)],
+                            xc = dimensions.width * parseFloat(lineSplit[1]),
+                            yc = dimensions.height * parseFloat(lineSplit[2]),
+                            w = dimensions.width * parseFloat(lineSplit[3]),
+                            h = dimensions.height * parseFloat(lineSplit[4]),
+                            x = xc - w/2,
+                            y = yc - h/2,
+                            rect = {
+                                left: Math.round(x),
+                                top: Math.round(y),
+                                right: Math.round(x + w),
+                                bottom: Math.round(y + h),
+                                creationTimestamp: rects.length,
+                                tags: [tag]
+                            };
+                        for (var oldRect in rects) {
+                            if (rects.hasOwnProperty(oldRect)) {
+                                oldRect = rects[oldRect];
+                                if (oldRect.left === rect.left && oldRect.top === rect.top && oldRect.right === rect.right && oldRect.bottom === rect.bottom) {
+                                    oldRect.tags.push(tag);
+                                    rect = undefined;
+                                    break;
+                                }
+                            }
+                        }
+                        if (rect) {
+                            rects.push(rect);
+                        }
+                    });
+                    mappingFileReadLine.on('close', function () {
+                        resolve(rects);
+                    });
+                    mappingFileReadLine.on('error', function (err) {
+                        log.error('Error reading file yolo mapping', filename, err);
+                        resolve([], err);
+                    });
+                }).then(function (rects) {
+                    tempCurrentObject.rects = rects;
+                    io.sockets.emit('newFile', filename);
+                });
             }).on('unlink', function (filename) {
                 log.info(filename, ' was unlinked');
                 log.debug('map before', JSON.stringify(mapArquivos));
@@ -184,16 +238,6 @@
                         }
                     });
 
-                    socket.on('addTag', function (tag) {
-                        log.info('Add tag: ', tag);
-                        tags.push(tag);
-                        socket.emit('updateTags', tags);
-                    });
-
-                    socket.on('getTags', function () {
-                        socket.emit('updateTags', tags);
-                    });
-
                     socket.on('getPreviousFileAddress', function (current) {
                         log.debug('getPreviousFileAddress', current, JSON.stringify(mapArquivos[current]));
                         if (current && mapArquivos.hasOwnProperty(current)) {
@@ -203,6 +247,16 @@
                         } else {
                             socket.emit('updatedFileAndRects', fistFile, mapArquivos[fistFile].rects);
                         }
+                    });
+
+                    socket.on('addTag', function (tag) {
+                        log.info('Add tag: ', tag);
+                        tags.push(tag);
+                        socket.emit('updateTags', tags);
+                    });
+
+                    socket.on('getTags', function () {
+                        socket.emit('updateTags', tags);
                     });
 
                     socket.on('addImageRect', function (fileAddress, rect) {
