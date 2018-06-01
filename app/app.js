@@ -5,7 +5,8 @@ var app = {};
         currentFileAddress,
         rects,
         currentRect,
-        canvasSameRectTolerance = 5;
+        canvasSameRectTolerance = 5,
+        scale = 1;
 
     app.requestNextFileAddress = function () {
         socket.emit('getNextFileAddress', currentFileAddress);
@@ -13,6 +14,15 @@ var app = {};
 
     app.requestPreviousFileAddress = function () {
         socket.emit('getPreviousFileAddress', currentFileAddress);
+    };
+
+    app.resizeCanvas = function () {
+        if (app.background) {
+            scale = Math.min((window.innerWidth * 0.98) / app.background.width, (window.innerHeight - 235) / app.background.height);
+            app.canvas.width = app.background.width * scale;
+            app.canvas.height = app.background.height * scale;
+            app.draw();
+        }
     };
 
     app.initConnection = function () {
@@ -32,9 +42,7 @@ var app = {};
                 background.src = '/yolo/' + updatedFileAddress;
                 background.onload = function () {
                     app.background = background;
-                    app.canvas.width = app.background.width;
-                    app.canvas.height = app.background.height;
-                    app.draw();
+                    app.resizeCanvas();
                 };
             }
         });
@@ -68,6 +76,8 @@ var app = {};
         socket.emit('getNextFileAddress');
         socket.emit('getTags');
     };
+
+    window.onresize = app.resizeCanvas;
 
     app.reprintTags = function () {
         var tagsElement = document.getElementById('tags');
@@ -139,10 +149,10 @@ var app = {};
         };
         app.canvas.onmouseup = function () {
             app.isMouseDown = false;
-            var left = Math.min(app.initialX, app.x),
-                top = Math.min(app.initialY, app.y),
-                right = Math.max(app.initialX, app.x),
-                bottom = Math.max(app.initialY, app.y),
+            var left = Math.min(app.initialX, app.x) / scale,
+                top = Math.min(app.initialY, app.y) / scale,
+                right = Math.max(app.initialX, app.x) / scale,
+                bottom = Math.max(app.initialY, app.y) / scale,
                 tempRect = new Rect(left, top, right, bottom);
             if (tempRect.height() < canvasSameRectTolerance && tempRect.width() < canvasSameRectTolerance) {
                 for (var rect in rects) {
@@ -183,7 +193,7 @@ var app = {};
 
     app.draw = function () {
         if (app.background && app.background.complete) {
-            app.canvasContext.drawImage(app.background, 0, 0);
+            app.canvasContext.drawImage(app.background, 0, 0, app.background.width * scale, app.background.height * scale);
         }
 
         if (rects) {
@@ -191,7 +201,7 @@ var app = {};
                 if (rects.hasOwnProperty(rect)) {
                     rect = rects[rect];
                     app.canvasContext.beginPath();
-                    app.canvasContext.rect(rect.left, rect.top, rect.width(), rect.height());
+                    app.canvasContext.rect(rect.left * scale, rect.top * scale, rect.width() * scale, rect.height() * scale);
                     app.canvasContext.strokeStyle = !currentRect || rect.creationTimestamp !== currentRect.creationTimestamp || app.isMouseDown ? 'black' : 'red';
                     app.canvasContext.stroke();
                 }
