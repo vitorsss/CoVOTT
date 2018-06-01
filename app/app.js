@@ -47,11 +47,21 @@ var app = {};
         });
         socket.on('imageRectAddedOrChanged', function (fileAddress, rect) {
             if (fileAddress === currentFileAddress) {
-                window.console.log('imageRectAdded', new Date().getTime(), JSON.stringify(rect));
+                window.console.log('imageRectAddedOrChanged', new Date().getTime(), JSON.stringify(rect));
                 rects[rect.creationTimestamp] = Rect.fromObject(rect);
                 if (currentRect && rect.creationTimestamp === currentRect.creationTimestamp) {
                     currentRect = rects[rect.creationTimestamp];
                 }
+                app.draw();
+            }
+        });
+        socket.on('imageRectDeleted', function (fileAddress, rect) {
+            if (fileAddress === currentFileAddress) {
+                window.console.log('imageRectDeleted', new Date().getTime(), JSON.stringify(rect));
+                if (currentRect && rect.creationTimestamp === currentRect.creationTimestamp) {
+                    currentRect = undefined;
+                }
+                delete rects[rect.creationTimestamp];
                 app.draw();
             }
         });
@@ -96,6 +106,13 @@ var app = {};
             });
             socket.emit('updateRect', currentFileAddress, currentRect);
         }
+    };
+
+    app.deletaCurrentRect = function () {
+        delete rects[currentRect.creationTimestamp];
+        socket.emit('deleteImageRect', currentFileAddress, currentRect);
+        currentRect = undefined;
+        app.draw();
     };
 
     app.initCanvas = function () {
