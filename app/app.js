@@ -5,7 +5,7 @@ var app = {};
         currentFileAddress,
         rects,
         currentRect,
-        canvasSameRectTolerance = 5,
+        canvasSameRectTolerance = 7,
         scale = 1;
 
     app.requestNextFileAddress = function () {
@@ -31,6 +31,7 @@ var app = {};
             window.console.log(updatedFileAddress, JSON.stringify(updatedFileRects));
             if (updatedFileAddress) {
                 currentFileAddress = updatedFileAddress;
+                currentRect = undefined;
                 rects = {};
                 for (var rect in updatedFileRects) {
                     if (updatedFileRects.hasOwnProperty(rect)) {
@@ -149,10 +150,10 @@ var app = {};
         };
         app.canvas.onmouseup = function () {
             app.isMouseDown = false;
-            var left = Math.min(app.initialX, app.x) / scale,
-                top = Math.min(app.initialY, app.y) / scale,
-                right = Math.max(app.initialX, app.x) / scale,
-                bottom = Math.max(app.initialY, app.y) / scale,
+            var left = Math.min(app.initialX, app.x),
+                top = Math.min(app.initialY, app.y),
+                right = Math.max(app.initialX, app.x),
+                bottom = Math.max(app.initialY, app.y),
                 tempRect = new Rect(left, top, right, bottom);
             if (tempRect.height() < canvasSameRectTolerance && tempRect.width() < canvasSameRectTolerance) {
                 for (var rect in rects) {
@@ -160,19 +161,19 @@ var app = {};
                         rect = rects[rect];
                         var tempRectCenterX = tempRect.centerX(),
                             tempRectCenterY = tempRect.centerY();
-                        if (tempRectCenterX > rect.left + canvasSameRectTolerance && tempRectCenterX < rect.right - canvasSameRectTolerance) {
-                            if (tempRectCenterY < rect.top + canvasSameRectTolerance && tempRectCenterY > rect.top - canvasSameRectTolerance) {
+                        if (tempRectCenterX > (rect.left * scale) + canvasSameRectTolerance && tempRectCenterX < (rect.right * scale) - canvasSameRectTolerance) {
+                            if (tempRectCenterY < (rect.top * scale) + canvasSameRectTolerance && tempRectCenterY > (rect.top * scale) - canvasSameRectTolerance) {
                                 currentRect = rect;
                                 break;
-                            } else if (tempRectCenterY < rect.bottom + canvasSameRectTolerance && tempRectCenterY > rect.bottom - canvasSameRectTolerance) {
+                            } else if (tempRectCenterY < (rect.bottom * scale) + canvasSameRectTolerance && tempRectCenterY > (rect.bottom * scale) - canvasSameRectTolerance) {
                                 currentRect = rect;
                                 break;
                             }
-                        } else if (tempRectCenterY > rect.top + canvasSameRectTolerance && tempRectCenterY < rect.bottom - canvasSameRectTolerance) {
-                            if (tempRectCenterX < rect.left + canvasSameRectTolerance && tempRectCenterX > rect.left - canvasSameRectTolerance) {
+                        } else if (tempRectCenterY > (rect.top * scale) + canvasSameRectTolerance && tempRectCenterY < (rect.bottom * scale) - canvasSameRectTolerance) {
+                            if (tempRectCenterX < (rect.left * scale) + canvasSameRectTolerance && tempRectCenterX > (rect.left * scale) - canvasSameRectTolerance) {
                                 currentRect = rect;
                                 break;
-                            } else if (tempRectCenterX < rect.right + canvasSameRectTolerance && tempRectCenterX > rect.right - canvasSameRectTolerance) {
+                            } else if (tempRectCenterX < (rect.right * scale) + canvasSameRectTolerance && tempRectCenterX > (rect.right * scale) - canvasSameRectTolerance) {
                                 currentRect = rect;
                                 break;
                             }
@@ -180,7 +181,7 @@ var app = {};
                     }
                 }
             } else {
-                currentRect = tempRect;
+                currentRect = new Rect(left / scale, top / scale, right / scale, bottom / scale);
                 rects[currentRect.creationTimestamp] = currentRect;
                 window.console.log('addImageRect', new Date().getTime());
                 socket.emit('addImageRect', currentFileAddress, currentRect);
