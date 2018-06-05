@@ -291,11 +291,43 @@
                         }
                     });
 
+                    socket.on('getNextUntaggedFileAddress', function (current) {
+                        log.debug('getNextUntaggedFileAddress', current, JSON.stringify(mapArquivos[current]));
+                        if (current && mapArquivos.hasOwnProperty(current)) {
+                            while (mapArquivos[current].nextFile && mapArquivos[mapArquivos[current].nextFile].rects.length) {
+                                current = mapArquivos[current].nextFile;
+                            }
+                            if (mapArquivos[current].nextFile) {
+                                socket.emit('updatedFileAndRects', mapArquivos[current].nextFile, mapArquivos[mapArquivos[current].nextFile].rects);
+                            } else {
+                                socket.emit('updatedFileAndRects', current, mapArquivos[current].rects);
+                            }
+                        } else {
+                            socket.emit('updatedFileAndRects', fistFile, mapArquivos[fistFile].rects);
+                        }
+                    });
+
                     socket.on('getPreviousFileAddress', function (current) {
                         log.debug('getPreviousFileAddress', current, JSON.stringify(mapArquivos[current]));
                         if (current && mapArquivos.hasOwnProperty(current)) {
                             if (mapArquivos[current].lastFile) {
                                 socket.emit('updatedFileAndRects', mapArquivos[current].lastFile, mapArquivos[mapArquivos[current].lastFile].rects);
+                            }
+                        } else {
+                            socket.emit('updatedFileAndRects', fistFile, mapArquivos[fistFile].rects);
+                        }
+                    });
+
+                    socket.on('getPreviousUntaggedFileAddress', function (current) {
+                        log.debug('getPreviousFileAddress', current, JSON.stringify(mapArquivos[current]));
+                        if (current && mapArquivos.hasOwnProperty(current)) {
+                            while (mapArquivos[current].lastFile && mapArquivos[mapArquivos[current].lastFile].rects.length) {
+                                current = mapArquivos[current].lastFile;
+                            }
+                            if (mapArquivos[current].lastFile) {
+                                socket.emit('updatedFileAndRects', mapArquivos[current].lastFile, mapArquivos[mapArquivos[current].lastFile].rects);
+                            } else {
+                                socket.emit('updatedFileAndRects', current, mapArquivos[current].rects);
                             }
                         } else {
                             socket.emit('updatedFileAndRects', fistFile, mapArquivos[fistFile].rects);

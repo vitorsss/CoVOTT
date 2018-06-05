@@ -12,8 +12,16 @@ var app = {};
         socket.emit('getNextFileAddress', currentFileAddress);
     };
 
+    app.requestNextUntaggedFileAddress = function () {
+        socket.emit('getNextUntaggedFileAddress', currentFileAddress);
+    };
+
     app.requestPreviousFileAddress = function () {
         socket.emit('getPreviousFileAddress', currentFileAddress);
+    };
+
+    app.requestPreviousUntaggedFileAddress = function () {
+        socket.emit('getPreviousUntaggedFileAddress', currentFileAddress);
     };
 
     app.resizeCanvas = function () {
