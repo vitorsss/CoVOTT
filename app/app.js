@@ -5,6 +5,7 @@ var app = {};
         currentFileAddress,
         rects,
         currentRect,
+        currentHandler,
         canvasSameRectTolerance = 7,
         scale = 1;
 
@@ -134,6 +135,29 @@ var app = {};
         app.draw();
     };
 
+    app.point = function (x, y) {
+        return {
+            x: x,
+            y: y
+        };
+    };
+
+    app.dist = function (p1, p2) {
+        return Math.sqrt((p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y));
+    };
+
+    app.getHandle = function (mouse, rect) {
+        if (app.dist(mouse, app.point(rect.left, rect.top)) <= canvasSameRectTolerance) return 'nw';
+        if (app.dist(mouse, app.point(rect.right, rect.top)) <= canvasSameRectTolerance) return 'ne';
+        if (app.dist(mouse, app.point(rect.left, rect.bottom)) <= canvasSameRectTolerance) return 'sw';
+        if (app.dist(mouse, app.point(rect.right, rect.bottom)) <= canvasSameRectTolerance) return 'se';
+        if (app.dist(mouse, app.point(rect.centerX(), rect.top)) <= canvasSameRectTolerance) return 'n';
+        if (app.dist(mouse, app.point(rect.left, rect.centerY())) <= canvasSameRectTolerance) return 'w';
+        if (app.dist(mouse, app.point(rect.centerX(), rect.bottom)) <= canvasSameRectTolerance) return 's';
+        if (app.dist(mouse, app.point(rect.right, rect.centerY())) <= canvasSameRectTolerance) return 'e';
+        return false;
+    };
+
     app.initCanvas = function () {
         app.canvas = document.getElementById("imageCanvas");
         app.canvas.width = window.innerWidth - 18;
@@ -143,17 +167,65 @@ var app = {};
         app.canvas.onmousedown = function (e) {
             app.isMouseDown = true;
             var rect = app.canvas.getBoundingClientRect();
-            app.initialX = e.clientX - rect.left;
-            app.initialY = e.clientY - rect.top;
-            app.x = app.initialX;
-            app.y = app.initialY;
+            if (currentRect && currentHandler) {
+                delete rects[currentRect.creationTimestamp];
+                app.initialX = currentRect.left * scale;
+                app.initialY = currentRect.top * scale;
+                app.x = currentRect.right * scale;
+                app.y = currentRect.bottom * scale;
+            } else {
+                app.initialX = e.clientX - rect.left;
+                app.initialY = e.clientY - rect.top;
+                app.x = app.initialX;
+                app.y = app.initialY;
+            }
         };
         app.canvas.onmousemove = function (e) {
+            var rect = app.canvas.getBoundingClientRect();
             if (app.isMouseDown) {
-                var rect = app.canvas.getBoundingClientRect();
-                app.x = e.clientX - rect.left;
-                app.y = e.clientY - rect.top;
+                switch (currentHandler) {
+                    case 'nw':
+                        app.initialX = e.clientX - rect.left;
+                        app.initialY = e.clientY - rect.top;
+                    break;
+                    case 'ne':
+                        app.x = e.clientX - rect.left;
+                        app.initialY = e.clientY - rect.top;
+                    break;
+                    case 'sw':
+                        app.initialX = e.clientX - rect.left;
+                        app.y = e.clientY - rect.top;
+                    break;
+                    case 'se':
+                        app.x = e.clientX - rect.left;
+                        app.y = e.clientY - rect.top;
+                    break;
+                    case 'n':
+                        app.initialY = e.clientY - rect.top;
+                    break;
+                    case 'w':
+                        app.initialX = e.clientX - rect.left;
+                    break;
+                    case 's':
+                        app.y = e.clientY - rect.top;
+                    break;
+                    case 'e':
+                        app.x = e.clientX - rect.left;
+                    break;
+                    default:
+                        app.x = e.clientX - rect.left;
+                        app.y = e.clientY - rect.top;
+                }
                 app.draw();
+            } else if (currentRect) {
+                var handle = app.getHandle(app.point((e.clientX - rect.left) / scale, (e.clientY - rect.top) / scale), currentRect);
+                if (handle) {
+                    app.canvas.style.cursor = handle + '-resize';
+                    currentHandler = handle;
+                } else {
+                    app.canvas.style.cursor = 'default';
+                    currentHandler = undefined;
+                }
             }
         };
         app.canvas.onmouseup = function () {
@@ -189,11 +261,20 @@ var app = {};
                     }
                 }
             } else {
+                var tempCurrentRect = currentRect;
                 currentRect = new Rect(left / scale, top / scale, right / scale, bottom / scale);
+                if (currentHandler) {
+                    currentRect.tags = tempCurrentRect.tags;
+                    currentRect.creationTimestamp = tempCurrentRect.creationTimestamp;
+                    window.console.log('updateRect', new Date().getTime());
+                    socket.emit('updateRect', currentFileAddress, currentRect);
+                } else {
+                    window.console.log('addImageRect', new Date().getTime());
+                    socket.emit('addImageRect', currentFileAddress, currentRect);
+                }
                 rects[currentRect.creationTimestamp] = currentRect;
-                window.console.log('addImageRect', new Date().getTime());
-                socket.emit('addImageRect', currentFileAddress, currentRect);
             }
+            currentHandler = undefined;
             app.draw();
         };
 
