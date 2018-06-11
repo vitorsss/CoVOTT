@@ -26,7 +26,7 @@ var app = {};
 
     app.resizeCanvas = function () {
         if (app.background) {
-            scale = Math.min((window.innerWidth * 0.98) / app.background.width, (window.innerHeight - 235) / app.background.height);
+            scale = Math.min((window.innerWidth - 18) / app.background.width, (window.innerHeight - 195) / app.background.height);
             app.canvas.width = app.background.width * scale;
             app.canvas.height = app.background.height * scale;
             app.draw();

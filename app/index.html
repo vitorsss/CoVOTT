@@ -10,17 +10,20 @@
 <body onload="app.initCanvas()">
     <canvas id="imageCanvas" style="border-style: solid; border-width: 1px"></canvas>
     <br/>
-    <div>
-        <button id="prevButton" onclick="app.requestPreviousUntaggedFileAddress();">Prev Untagged</button>
-        <button id="prevButton" onclick="app.requestPreviousFileAddress();">Prev</button>
-        <button id="nextButton" onclick="app.requestNextFileAddress();">Next</button>
-        <button id="nextButton" onclick="app.requestNextUntaggedFileAddress();">Next Untagged</button>
-        <button id="deleteButton" onclick="app.deletaCurrentRect();" style="margin-left: 80px;">Delete Current Rect</button>
+    <div style="display: flex;">
+        <div>
+            <select id="tags" multiple="true" style="min-width: 270px; min-height: 150px" onchange="app.atualizaRectTags()"></select>
+            <br/>
+            <input type="text" id="newTag"><button onclick="app.adicionaTag()">Adicionar Tag</button>
+        </div>
+        <div style="display: inline-grid;">
+            <button id="prevButton" onclick="app.requestPreviousUntaggedFileAddress();">Prev Untagged</button>
+            <button id="prevButton" onclick="app.requestPreviousFileAddress();">Prev</button>
+            <button id="nextButton" onclick="app.requestNextFileAddress();">Next</button>
+            <button id="nextButton" onclick="app.requestNextUntaggedFileAddress();">Next Untagged</button>
+            <button id="deleteButton" onclick="app.deletaCurrentRect();" style="margin-top: 40px">Delete Current Rect</button>
+        </div>
     </div>
-    <br/>
-    <select id="tags" multiple="true" style="min-width: 270px; min-height: 150px" onchange="app.atualizaRectTags()"></select>
-    <br/>
-    <input type="text" id="newTag"><button onclick="app.adicionaTag()">Adicionar Tag</button>
 </body>
 
 </html>
