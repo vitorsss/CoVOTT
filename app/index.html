@@ -23,6 +23,9 @@
             <button id="nextButton" onclick="app.requestNextUntaggedFileAddress();">Next Untagged</button>
             <button id="deleteButton" onclick="app.deletaCurrentRect();" style="margin-top: 40px">Delete Current Rect</button>
         </div>
+        <div>
+            Project: <select id="projects" onchange="app.atualizaProjetoSelecionado()"></select>
+        </div>
     </div>
 </body>
 

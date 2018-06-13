@@ -7,6 +7,7 @@ var app = {};
         currentRect,
         currentHandler,
         canvasSameRectTolerance = 7,
+        currentProject,
         scale = 1;
 
     app.requestNextFileAddress = function () {
@@ -49,7 +50,7 @@ var app = {};
                     }
                 }
                 var background = new Image();
-                background.src = '/yolo/' + updatedFileAddress;
+                background.src = '/' + currentProject + '/' + updatedFileAddress;
                 background.onload = function () {
                     app.background = background;
                     app.resizeCanvas();
@@ -83,8 +84,28 @@ var app = {};
                 app.draw();
             }
         });
-        socket.emit('getNextFileAddress');
-        socket.emit('getTags');
+        socket.on('projects', function (names) {
+            window.console.log('projects', names);
+            if (!currentProject || names.indexOf(currentProject) === -1) {
+                currentProject = names[0];
+                socket.emit('room', currentProject);
+                socket.emit('getNextFileAddress');
+                socket.emit('getTags');
+            }
+            var projectsElement = document.getElementById('projects');
+            projectsElement.innerHTML = '';
+            for (var projectName in names) {
+                if (names.hasOwnProperty(projectName)) {
+                    projectName = names[projectName];
+                    var projectOption = document.createElement('option');
+                    projectOption.innerHTML = projectName;
+                    projectOption.value = projectName;
+                    projectOption.selected = projectName === currentProject;
+                    projectsElement.appendChild(projectOption);
+                }
+            }
+        });
+        socket.emit('listProjects');
     };
 
     window.onresize = app.resizeCanvas;
@@ -128,6 +149,15 @@ var app = {};
         }
     };
 
+    app.atualizaProjetoSelecionado = function () {
+        if (currentProject) {
+            currentProject = document.getElementById('projects').value;
+            socket.emit('room', currentProject);
+            socket.emit('getNextFileAddress');
+            socket.emit('getTags');
+        }
+    };
+
     app.deletaCurrentRect = function () {
         delete rects[currentRect.creationTimestamp];
         socket.emit('deleteImageRect', currentFileAddress, currentRect);
@@ -147,14 +177,15 @@ var app = {};
     };
 
     app.getHandle = function (mouse, rect) {
-        if (app.dist(mouse, app.point(rect.left, rect.top)) <= canvasSameRectTolerance) return 'nw';
-        if (app.dist(mouse, app.point(rect.right, rect.top)) <= canvasSameRectTolerance) return 'ne';
-        if (app.dist(mouse, app.point(rect.left, rect.bottom)) <= canvasSameRectTolerance) return 'sw';
-        if (app.dist(mouse, app.point(rect.right, rect.bottom)) <= canvasSameRectTolerance) return 'se';
-        if (app.dist(mouse, app.point(rect.centerX(), rect.top)) <= canvasSameRectTolerance) return 'n';
-        if (app.dist(mouse, app.point(rect.left, rect.centerY())) <= canvasSameRectTolerance) return 'w';
-        if (app.dist(mouse, app.point(rect.centerX(), rect.bottom)) <= canvasSameRectTolerance) return 's';
-        if (app.dist(mouse, app.point(rect.right, rect.centerY())) <= canvasSameRectTolerance) return 'e';
+        var tolerance = canvasSameRectTolerance / scale;
+        if (app.dist(mouse, app.point(rect.left, rect.top)) <= tolerance) return 'nw';
+        if (app.dist(mouse, app.point(rect.right, rect.top)) <= tolerance) return 'ne';
+        if (app.dist(mouse, app.point(rect.left, rect.bottom)) <= tolerance) return 'sw';
+        if (app.dist(mouse, app.point(rect.right, rect.bottom)) <= tolerance) return 'se';
+        if (app.dist(mouse, app.point(rect.centerX(), rect.top)) <= tolerance) return 'n';
+        if (app.dist(mouse, app.point(rect.left, rect.centerY())) <= tolerance) return 'w';
+        if (app.dist(mouse, app.point(rect.centerX(), rect.bottom)) <= tolerance) return 's';
+        if (app.dist(mouse, app.point(rect.right, rect.centerY())) <= tolerance) return 'e';
         return false;
     };
 
