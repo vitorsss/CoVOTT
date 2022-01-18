@@ -28,9 +28,6 @@
         "properties": "^1.2.1",
         "socket.io": "^2.0.4"
     },
-    "jslintConfig": {
-        "es6": true
-    },
     "eslintConfig": {
         "env": {
             "browser": true,

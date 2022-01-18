@@ -323,7 +323,7 @@ var app = {};
                     rect = rects[rect];
                     app.canvasContext.beginPath();
                     app.canvasContext.rect(rect.left * scale, rect.top * scale, rect.width() * scale, rect.height() * scale);
-                    app.canvasContext.strokeStyle = !currentRect || rect.creationTimestamp !== currentRect.creationTimestamp || app.isMouseDown ? 'black' : 'red';
+                    app.canvasContext.strokeStyle = !currentRect || rect.creationTimestamp !== currentRect.creationTimestamp || app.isMouseDown ? (rect.tags.length ? 'blue' : 'black') : 'red';
                     app.canvasContext.stroke();
                 }
             }
