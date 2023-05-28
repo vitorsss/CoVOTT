@@ -13,7 +13,7 @@
         Promise = require('promise'),
         readline = require('readline'),
         imageSize = require('image-size'),
-        log = new Log('debug', fs.createWriteStream('my.log')),
+        log = new Log('debug'),
         users = 0,
         propertiesLoader = require("properties"),
         tags = {},
@@ -414,8 +414,8 @@
 
                 server.listen(DEFAULT_PORT);
                 log.info('Running on http://localhost:' + DEFAULT_PORT + " - " + (new Date().getTime() - initialTimestamp));
-            }, function () {
-
+            }, function (err) {
+                log.error(`Failed to start server on http://localhost:${DEFAULT_PORT}`, err);
             })
         }, function (err) {
             log.error('Erro ao verificar arquivos YOLO:', err);

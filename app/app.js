@@ -6,7 +6,7 @@ var app = {};
         rects,
         currentRect,
         currentHandler,
-        canvasSameRectTolerance = 7,
+        canvasSameRectTolerance = 2,
         currentProject,
         scale = 1;
 

@@ -18,15 +18,16 @@
     },
     "homepage": "https://github.com/vitorsss/CoVOTT#readme",
     "dependencies": {
-        "body-parser": "^1.18.2",
-        "bower": "^1.8.2",
-        "chokidar": "^2.0.3",
-        "express": "^4.16.3",
-        "image-size": "^0.6.2",
-        "log": "^1.4.0",
-        "promise": "^8.0.1",
+        "body-parser": "^1.20.0",
+        "bower": "^1.8.14",
+        "chokidar": "^3.5.3",
+        "express": "^4.18.1",
+        "image-size": "^1.0.1",
+        "log": "^6.3.1",
+        "promise": "^8.1.0",
         "properties": "^1.2.1",
-        "socket.io": "^2.0.4"
+        "socket.io": "^4.5.1",
+        "socket.io-client": "2.4.0"
     },
     "eslintConfig": {
         "env": {
